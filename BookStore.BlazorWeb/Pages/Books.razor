@@ -1,0 +1,164 @@
+﻿@using BookStore.BlazorWeb.Models
+@using BookStore.BlazorWeb.Abstractions
+@inject IBookService bookService
+
+<h1>Магазин книг</h1>
+
+@if (books == null)
+{
+    <p>Loading</p>
+}
+else
+{
+    <form>
+        <label>Поиск по: </label>
+        <select @bind="searchBookState">
+            <option value="@SearchBookState.Title">Название</option>
+            <option value="@SearchBookState.Author">Автор</option>
+            <option value="@SearchBookState.Date">Год издания</option>
+        </select>
+        <input @bind="searchValue"/>
+        <input type="button" class="btn btn-primary" @onclick="(() => GetByAsync(searchBookState, searchValue))" value="Поиск" />
+    </form>
+    <p class="text-danger">
+        @message
+    </p>
+
+    if (books.Count() == 0)
+    {
+        <p>Нет книг в магазине</p>   
+    }
+    else
+    {
+        <h3>Книги:</h3>
+    
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th><button class="btn btn-link m-0 p-0" @onclick="(() => SortBookByTitle())">Название</button></th>
+                    <th><button class="btn btn-link m-0 p-0" @onclick="(() => SortBookByAuthor())">Автор</button></th>
+                    <th><button class="btn btn-link m-0 p-0" @onclick="(() => SortBookByDate())">Год издания</button></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var book in books)
+                {
+                    <tr>
+                        <td>
+                            @book.Id
+                        </td>
+                        <td>
+                            @book.Title
+                        </td>
+                        <td>
+                            @book.Author
+                        </td>
+                        <td>
+                            @book.Date
+                        </td>
+                        <td>
+                            <input type="button" class="btn btn-primary" @onclick="(() => BuyAsync(book.Id))" value="Купить" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<Book> books = null;
+    private SearchBookState searchBookState;
+    private string searchValue;
+    private SortBookState sortBookOrder = SortBookState.IdAsc;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        books = await bookService.GetAsync();
+    }
+
+    private void SortBookByTitle()
+    {
+        sortBookOrder = sortBookOrder == SortBookState.TitleAsc ? SortBookState.TitleDesc : SortBookState.TitleAsc;
+        SortBook();
+    }
+
+    private void SortBookByAuthor()
+    {
+        sortBookOrder = sortBookOrder == SortBookState.AuthorAsc ? SortBookState.AuthorDesc : SortBookState.AuthorAsc;
+        SortBook();
+    }
+
+    private void SortBookByDate()
+    {
+        sortBookOrder = sortBookOrder == SortBookState.DateAsc ? SortBookState.DateDesc : SortBookState.DateAsc;
+        SortBook();
+    }
+
+    private void SortBook()
+    {
+        if (books != null)
+        {
+            books = sortBookOrder switch
+            {
+                SortBookState.TitleAsc => books.OrderBy(b => b.Title).ToList(),
+                SortBookState.TitleDesc => books.OrderByDescending(b => b.Title).ToList(),
+                SortBookState.AuthorAsc => books.OrderBy(b => b.Author).ToList(),
+                SortBookState.AuthorDesc => books.OrderByDescending(b => b.Author).ToList(),
+                SortBookState.DateAsc => books.OrderBy(b => b.Date).ToList(),
+                SortBookState.DateDesc => books.OrderByDescending(b => b.Date).ToList(),
+                _ => books.OrderBy(b => b.Id).ToList()
+            };
+        }
+    }
+
+    private async Task<bool> BuyAsync(int bookId)
+    {
+        message = "";
+        var result = false;
+
+        var book = books.FirstOrDefault(x => x.Id == bookId);
+
+        if (book != null)
+            books.Remove(book);
+
+        try
+        {
+            result = await bookService.BuyAsync(bookId);
+        }
+        catch(Exception ex)
+        {
+            message = ex.Message;
+        }
+
+        return result;
+    }
+
+    private async Task GetByAsync(SearchBookState searchBookState, string value)
+    {
+        message = "";
+
+        try
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                books = await bookService.GetAsync();
+                return;
+            }
+
+            books = searchBookState switch
+            {
+                SearchBookState.Title => await bookService.GetByTitleAsync(value),
+                SearchBookState.Author => await bookService.GetByAuthorAsync(value),
+                SearchBookState.Date => await bookService.GetByDateAsync(value)
+            };
+        }
+        catch (Exception ex)
+        {
+            books.Clear();
+            message = ex.Message;
+        }
+    }
+}
