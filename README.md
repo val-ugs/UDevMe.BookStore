@@ -28,7 +28,7 @@
         </ul>
       </li>
       <li>
-        Консольный режим
+        Консольное приложение
         </br>
         Две команды: get и buy
         </br>
@@ -72,5 +72,5 @@
 ## Пример запуска сайта
 ![alt text](https://github.com/val-ugs/UDevMe.BookStore/blob/master/BlazorWebImage.PNG?raw=true)
 
-## Пример запуска консольного режима
+## Пример запуска консольного приложения
 ![alt text](https://github.com/val-ugs/UDevMe.BookStore/blob/master/ConsoleAppImage.PNG?raw=true)
