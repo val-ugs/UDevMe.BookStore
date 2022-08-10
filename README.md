@@ -12,7 +12,7 @@
 
 Описание:
 <ol>
-  <li>Слой с данными - API с MSS SQL Server</li>
+  <li>Слой с данными - API с MS SQL Server</li>
 
   <li>UI:
     <ol type="a">
